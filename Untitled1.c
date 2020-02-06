@@ -13,13 +13,13 @@
     int findLength(char* str, size_t str_length)
     {
         int length = 0, add = 0, ret;
-        Bool atEnd = false;
+        int atEnd = 0;
         if(*str != 0){ //base case nonempty string
             while(!atEnd){
                 if(str[length] !='/0')
                 length++;
                 else{
-                atEnd = true;
+                atEnd = 1;
                 ret = length;
                 }
             }
@@ -30,17 +30,17 @@
     return ret;
     }
 
-    void splitVal(char* str, char Hold, int size)
+    void splitVal(char* str, char* Hold, int size)
     {
-        int aPtr =0, int i;
-        bool less = false
-        while(aptr < size){
+        int aPtr =0, i;
+        int less = 0;
+        while(aPtr < size){
             for(i=0; i<8; i++){
                 if(str[aPtr] != '\0')
                 Hold[i] = str[aPtr++];
                 else{
                 i=10;
-                less = true;
+                less = 1;
                 }
             }
             if(less)
@@ -53,11 +53,11 @@
      void Pad0(char* str, size_t str_length)
      {
         int length = 0, add = 0, i;
-        Bool atEnd = false;
+        int atEnd = 0;
         if(*str != 0){ //base case nonempty string
             while(!atEnd){
                 if(length > 7)
-                atEnd = true;
+                atEnd = 1;
                 else if(str[length] !='/0')
                 length++;
                 else{
@@ -82,9 +82,9 @@
          return sum;
      }
 
-     bool parIsEven(char* str)
+     int parIsEven(char* str)
      {
-         bool even = true;
+         int even = 1;
          int numOnes = 0, i;
          for(i = 0; i <8; i++)
          {
@@ -95,44 +95,47 @@
          }
          if(numOnes % 2)
          {
-             even = false;
+             even = 0;
          }
          return even;
      }
 
      printLine(char* str)
      {
+         
          int i, Dec;
-         bool Par;
+         int Par;
          char Parity[5];
          Dec = binToDec(str);
          Par = parIsEven(str);
          if(Par)
-        Parity = "EVEN";
-          else
-        Parity = "ODD"
-         printf("%s \t%c \t%d %s\n", str, char(Dec), Dec, Parity);
+            strcpy(Parity, "EVEN");
+         else
+            strcpy(Parity, "ODD");
+              printf("%s \t%c \t%d %s\n", str, Dec + '0', Dec, Parity);
      }
 
     int main(int argc, char* argv[]) {
         FILE* fPtr;
         char str[100];
         char temp[15];
-        char* fName = "c:\\Users\\josht\\OneDrive\\Documents\\Docs\\test.txt";
+        char fName[255];
         int vLength = 0;
+        strcpy(fName, "c:\\Users\\josht\\OneDrive\\Documents\\Docs\\test.txt");
         if ((fPtr = fopen(fName, "r")) == NULL) {
             printf("Error file failed to open");
             // Program exits if the file pointer returns NULL.
             exit(1);//add different file name
             //01011101 10110111 11101011 111101
+        }
             printChart();
             while(fPtr != EOF){
                 fscanf(fPtr, "%s", str);
                 vLength = findLength(str, sizeof(str));
                 if(vLength > 7)
-                    splitVal(str, temp, vLength)
+                    splitVal(str, temp, vLength);
                 else if(vLength < 7){
-                    pad0(str, sizeof(str);
+                    Pad0(str, sizeof(str));
                     printLine(str);
                 }
                 else{
@@ -145,6 +148,6 @@
 
 
             }
-            }
+            
     return 0;
         }
