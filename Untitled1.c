@@ -14,9 +14,9 @@
     {
         int length = 0, add = 0, ret;
         int atEnd = 0;
-        if(*str != 0){ //base case nonempty string
+        if(str[0] != '\0'){ //base case nonempty string
             while(!atEnd){
-                if(str[length] !='/0')
+                if(str[length] !='\0')
                 length++;
                 else{
                 atEnd = 1;
@@ -58,13 +58,13 @@
             while(!atEnd){
                 if(length > 7)
                 atEnd = 1;
-                else if(str[length] !='/0')
+                else if(str[length] !='\0')
                 length++;
                 else{
-                add = 7 - length;
+                //add = 8 - length;
                 str[8] = '\0';
-                for(i = add; i > 0; i--)
-                str[length++] = 0;
+                for(i = length; i < 8; i++)
+                str[i] = '0';
                 }
             }
         }
@@ -72,7 +72,7 @@
 
      int binToDec(char* str)
      {
-         int x = 32, sum = 0, i;
+         int x = 64, sum = 0, i;
          for(i = 1; i < 8; i++)
          {
           if(str[i] == '1')
@@ -112,7 +112,7 @@
             strcpy(Parity, "EVEN");
          else
             strcpy(Parity, "ODD");
-              printf("%s \t%c \t%d %s\n", str, Dec + '0', Dec, Parity);
+              printf("%s\t%c\t%d %s\n", str, Dec , Dec, Parity);
      }
 
     int main(int argc, char* argv[]) {
@@ -129,12 +129,12 @@
             //01011101 10110111 11101011 111101
         }
             printChart();
-            while(fPtr != EOF){
-                fscanf(fPtr, "%s", str);
+            while(fscanf(fPtr, "%s", str) != EOF){
+
                 vLength = findLength(str, sizeof(str));
-                if(vLength > 7)
+                if(vLength > 8)
                     splitVal(str, temp, vLength);
-                else if(vLength < 7){
+                else if(vLength < 8){
                     Pad0(str, sizeof(str));
                     printLine(str);
                 }
