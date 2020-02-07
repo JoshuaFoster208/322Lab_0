@@ -116,12 +116,23 @@
      }
 
     int main(int argc, char* argv[]) {
+        //argc length of argv number of params
+        //
         FILE* fPtr;
         char str[100];
         char temp[15];
         char fName[255];
         int vLength = 0;
-        strcpy(fName, "c:\\Users\\josht\\OneDrive\\Documents\\Docs\\test.txt");
+        if(argc == 1 || argv[1] == '-')//no file name
+        {
+          printf("Please enter file name or a path to the file\n"); 
+          scanf("%s", &fName);
+        }
+        else{
+            strcpy(fName, argv[1]);
+        }
+            
+        //strcpy(fName, "c:\\Users\\josht\\OneDrive\\Documents\\Docs\\test.txt");
         if ((fPtr = fopen(fName, "r")) == NULL) {
             printf("Error file failed to open");
             // Program exits if the file pointer returns NULL.
