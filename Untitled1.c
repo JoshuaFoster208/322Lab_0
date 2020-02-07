@@ -162,6 +162,6 @@
                 printLine(str);
                 }
             }
-            
+            fclose(fPtr);
     return 0;
         }
