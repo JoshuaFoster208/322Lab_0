@@ -24,6 +24,7 @@ void printProcess(int P, int S){
     }
     else{
     printf("PID: %d, CPID: %d, RETVAL: %d\n", getpid(), P, S);
+    times(&buf);
     printf("USER: %lu, SYS: %lu\n", buf.tms_utime, buf.tms_stime);
     printf("CUSER: %lu, CSYS: %lu\n", buf.tms_cutime, buf.tms_cstime);
     printf("STOP: %lu\n", time(NULL));
@@ -36,7 +37,6 @@ void splitProcess(){
     pid_t wait;
     pid = fork();
     wait = waitpid(pid, &status, 0);
-    clock_t times(struct tms *buf);
     printProcess(pid, status);
 }
 
@@ -44,7 +44,6 @@ int main(int argc, char** argv) {
     time_t T;
     T = printStartTime();
     splitProcess(T);
-   // printf("%d\n", startTime); 
     return (EXIT_SUCCESS);
 }
 
