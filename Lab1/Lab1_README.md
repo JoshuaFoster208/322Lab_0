@@ -13,3 +13,7 @@ Completed and being tested and ready to be downloaded
 4. Feb 27
    - Updated the files so that it runs on linux with new makefile
    - Fixed placement of times() and added png of ouput
+5. Feb 29
+   - Added a comment to main.c
+   - Added flags to the makefile
+	
