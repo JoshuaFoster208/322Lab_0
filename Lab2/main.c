@@ -10,15 +10,17 @@
  */
 
 void launch(int argc, char** argv);
+void fillArray(char** argv, int size, char* newArg[]);
 
 int main(int argc, char** argv) {
-    launch(argv);
+    launch(argc, argv);
     return (0);
 }
 
 void launch(int argc, char** argv){
     int prc, status = 0;
-     char *env_args[] = {"PATH=/bin", (char*)0 }; 
+    char* arg[argc-1];
+    fillArray(argv, argc, arg);
     prc = fork();
 
     if(prc > 0){
@@ -27,11 +29,21 @@ void launch(int argc, char** argv){
         fprintf(stderr, "%s: $? = %d \n", argv[1], status);
     } 
     else if (prc == 0){
-        execve(argv[1], argv, NULL);
+        execve(arg[0], arg, NULL);
 //        printf("%s", argv[1]);
     } 
     else if (prc == -1) {
         printf("Fork creation failed, error %d\n", errno);
         exit(EXIT_FAILURE);
+    }
+}
+
+
+
+void fillArray(char** argv, int argc, char* newArg[]) {
+    int i;
+    for(i = 1; i < argc; i++)
+    {
+    newArg[i-1] = argv[i];    
     }
 }
