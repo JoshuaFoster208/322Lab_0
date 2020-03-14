@@ -1,5 +1,5 @@
 # Name: Joshua Foster
-# Project: Lab1
+# Project: Lab2
 
 # This is a Makefile for my lab assignment. It allows me to easily and accurately rebuild
 # the lab assignment.
@@ -7,7 +7,7 @@
 
 # EXECUTABLES is a Make Variable (similar to an environment variable) that lists all the
 # "executables" associated with the lab. 
-EXECUTABLES=time-4-baby-and-me
+EXECUTABLES= launch tube
 SRC=main.c
 OBJ=main.o
 
