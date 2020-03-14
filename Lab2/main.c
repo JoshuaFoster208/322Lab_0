@@ -31,7 +31,7 @@ void launch(int argc, char** argv){
 //        printf("%s", argv[1]);
     } 
     else if (prc == -1) {
-        printf("Fork failed, error %d\n", errno);
+        printf("Fork creation failed, error %d\n", errno);
         exit(EXIT_FAILURE);
     }
 }
