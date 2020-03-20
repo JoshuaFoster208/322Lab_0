@@ -1,5 +1,5 @@
 Makefile
-Lab3/nbproject/*
+Lab3/nbproject
 *.mk
 *.bash
-..xml
+*.xml
