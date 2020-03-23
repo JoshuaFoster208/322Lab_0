@@ -9,7 +9,7 @@
 /*Global Variables*/
 static int count = 0;
 static int terms = 0;
-static const char* sigArray[] = {"HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT", "BUS", "FPE", "KILL",
+static const char* sigArray[] = { "HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT", "BUS", "FPE", "KILL",
                                   "USR1", "EGV", "USR2", "PIPE", "ALRM", "TERM", "CHLD", "CONT", "STOP",
                                   "TSTP", "TTIN", "TTOU", "URG", "XCPU", "XFSZ", "VTALRM", "PROF",
                                   "WINCH", "IO", "PWR", "SYS"};  
@@ -34,12 +34,12 @@ int main(int argc, char** argv) {
 void printStatusLine(){
     pid_t p = getpid();
     fprintf(stderr, "catcher: $$ = %d\n", p);
-}
+} 
 
 /*Signal handler tracks catches and tracks total signals 
   also tracks SIGTERMS in a row*/
 void sigHandler(int sig){
-    printf("SIG%s caught at %ld\n", sigArray[sig-1], time(NULL));
+    printf("\tSIG%s caught at %ld\n", sigArray[sig-1], time(NULL));
     if(sig == 15)
         terms++;
     else
