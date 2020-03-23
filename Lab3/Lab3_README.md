@@ -11,7 +11,7 @@ Completed tested and ready to be downloaded
 2. March 22
    - Basics finished begining testing
 3. March 23
-  - Program tested and ran
-  - Added comments and an error check method
-  - Final Check
-  - Remove duplicated directory
+   - Program tested and ran
+   - Added comments and an error check method
+   - Final Check
+   - Remove duplicated directory
