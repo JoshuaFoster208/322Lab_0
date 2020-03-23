@@ -1,4 +1,4 @@
-# 322Lab1
+# 322Lab2
 Current status of the project
 Completed and being tested and ready to be downloaded
 ## Output
