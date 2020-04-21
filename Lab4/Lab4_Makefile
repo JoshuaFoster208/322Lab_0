@@ -2,7 +2,7 @@
 # Project: Lab4: Rice^3
 
 EXECUTABLES=dining-p
-SRC=dining-p.c
+SRC=Src/dining-p.c
 OBJ=dining-p.o
 
 CC=gcc
@@ -13,7 +13,7 @@ CFLAGS = -g -Wall -Wextra
 all: $(EXECUTABLES)
 
 $(EXECUTABLES): $(SRC)
-	$(CC) $(CFLAGS) -c $(SRC) -lpthread -lrt
+	$(CC) $(CFLAGS) -c $(SRC) 
 	$(CC) $(CFLAGS) -o $@ $(OBJ) -lpthread -lrt
 
 clean:
