@@ -20,6 +20,8 @@ struct chpInfo {
     int seat;
     int pos;
     sem_t **chopstick;
+    //added for part 2 to create a critical section
+    sem_t *HnWChopstick;
 };
 
 void validParams(int argc, char** argv);
@@ -32,6 +34,7 @@ void initSem(char **argv, struct chpInfo *ch);
 void initGpid();
 void finishEating();
 void sigSet();
+int holdAndWait(struct chpInfo *ch, int j);
 
 int main(int argc, char** argv) {
     struct chpInfo I; 
@@ -74,9 +77,11 @@ void sigSet(){
 void dining(int argc, char** argv, struct chpInfo *ch){
     initSem(argv, ch);
     do{
-    eat(ch);
-    think(ch);
-    fullCycles++;
+         if (holdAndWait(ch, 1) == 1) {
+            eat(ch);
+            think(ch);
+            fullCycles++;
+         }
     }while(!Finished);
             
    /* int seats = atoi(argv[1]);
@@ -135,8 +140,9 @@ void initSem(char **argv, struct chpInfo *ch){
             memset(chops,0,40);
             sprintf(chops, "Chopstick%d", i);
             ch->chopstick[i] = sem_open(chops, O_CREAT, 0666, 1);
-
         }
+        //added for part 2 to create a critical section
+        ch->HnWChopstick = sem_open("allocate", O_CREAT, 0666, 1);
 }
 
 void initGpid(){
@@ -187,3 +193,20 @@ void randTime(){
     }
 }
 
+int holdAndWait(struct chpInfo *ch, int j) {
+    if (j == 1) {
+        int x;
+        if((sem_trywait(ch->HnWChopstick) != -1))
+            x = 1;
+        else
+            x = 0;
+        return x;
+    
+    }
+    else if (j == 0) {
+
+        sem_post(ch->HnWChopstick);
+        return 1;
+    }
+    return 1;
+}
