@@ -10,15 +10,29 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <signal.h>
+#include <sys/times.h>
+#include <time.h>
 
-#define pGroupFile "PGROUP.txt"
-sem_t * returnVal;
+//names for files used in the program
+#define File "PGROUP.txt"
+#define File2 "UNLINKED.txt"
+
+//keeps track of full number of eat-think cycles
 static int fullCycles = 0;
-static int Finished = 0;
+/*Accessing or modifying shared objects in signal handlers can result in race 
+conditions that can leave data in an inconsistent state. The two exceptions (C 
+Standard, 5.1.2.3, paragraph 5) to this rule are the ability to read from and 
+write to lock-free atomic objects and variables of type volatile sig_atomic_t. 
+Accessing any other type of object from a signal handler is undefined behavior. 
+(See undefined behavior 131.) info found at https://wiki.sei.cmu.edu/confluence/
+display/c/SIG31-C.+Do+not+access+shared+objects+in+signal+handlers*/
+volatile sig_atomic_t Finished = 0;
 
+/*struct holds all info about the chopsticks created, including the current
+philosopher seat and position. It also hold two sem_t pointers one for an array 
+and the other for the critical section*/
 struct chpInfo {
-    int seat;
-    int pos;
+    int total, pos;
     sem_t **chopstick;
     //added for part 2 to create a critical section
     sem_t *HnWChopstick;
@@ -28,22 +42,21 @@ void validParams(int argc, char** argv);
 void eat(struct chpInfo *ch);
 void think(struct chpInfo *ch);
 void randTime();
-void dining(int argc, char** argv, struct chpInfo *ch);
+void dining(char** argv);
 void sigHandler(int sig);
 void initSem(char **argv, struct chpInfo *ch);
+void setupString(char *chp, struct chpInfo *ch);
 void initGpid();
-void finishEating();
+void finishAndClose(struct chpInfo *ch);
 void sigSet();
-int holdAndWait(struct chpInfo *ch, int j);
+void chpUnlink(struct chpInfo *ch);
+void checkFirst(struct chpInfo *ch);
 
 int main(int argc, char** argv) {
-    struct chpInfo I; 
     validParams(argc, argv);
     sigSet();
-    initGpid();
     fprintf(stdout,"Pid: %d\n", getpid());
-    dining(argc, argv, &I);
-    printf("pid: %d \npgid: %d\n", getppid(),getpgid(0));
+    dining(argv);
     return (EXIT_SUCCESS);
 }
 
@@ -51,111 +64,122 @@ int main(int argc, char** argv) {
   Only 3 total parameters and position must be within size of seats*/
 void validParams(int argc, char** argv){
     if(argc < 3){
-        fprintf(stderr, "Error: Not enough arguments,");
+        fprintf(stderr, "Error: Not enough arguments, ");
         fprintf(stderr, "number of seats and current position needed.\n");
         exit(EXIT_FAILURE);
     } else if(argc > 3){
-        fprintf(stderr, "Error: Too many arguments,");
+        fprintf(stderr, "Error: Too many arguments, ");
         fprintf(stderr, "only number of seats and current position needed\n");
         exit(EXIT_FAILURE);        
     } else{   
         if(atoi(argv[2]) > atoi(argv[1])){
-           printf("Philosopher position greater than number of total seats\n");
+           fprintf(stderr, "Philosopher position greater than number of total seats\n");
            exit(EXIT_FAILURE);
         }
     }
 }
 
+//Call signal for term and int
 void sigSet(){
     if(signal(SIGTERM, sigHandler) == SIG_ERR){
-        fprintf(stderr, "Error: Could not register signal!\n");
+        fprintf(stderr, "Error: Could not register SIGTERM!\n");
+        exit(EXIT_FAILURE);
+    }
+    if(signal(SIGINT, sigHandler) == SIG_ERR){
+        fprintf(stderr, "Error: Could not register SIGINT!\n");
         exit(EXIT_FAILURE);
     }
 }
 
-/*Begin Dining*/
-void dining(int argc, char** argv, struct chpInfo *ch){
-    initSem(argv, ch);
-    do{
-         if (holdAndWait(ch, 1) == 1) {
-            eat(ch);
-            think(ch);
-            fullCycles++;
-         }
-    }while(!Finished);
-            
-   /* int seats = atoi(argv[1]);
-    int pos = atoi(argv[2]);
-    int i;
-    int fd = shm_open(argv[2], O_RDWR | O_CREAT, 0666);
-    sem_t * chopsticks[seats]; 
-    sem_t * temp;
-    
-      
-    if (ftruncate(fd, sizeof(*temp)*seats) != 0) {
-        fprintf(stderr, "Failed to resize the memory object\n");
-        exit(EXIT_FAILURE);
-    }
-    
-    mmap(NULL, sizeof(*temp), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    
-    if(temp == MAP_FAILED) {
-        fprintf(stderr, "Error: Failed to mmap() the memory object\n");
-	exit(EXIT_FAILURE);
-    }
-    //After finishing mapping you can unlink
-    if (shm_unlink(argv[2]) < 0) {
-        fprintf(stderr, "Error: failed to unlink the memory object\n");
-    }
+//When signal is caught set Finished flag to 0
+void sigHandler(int sig){
+   // if (sig == SIGTERM || sig == SIGINT)
+    Finished = 1;
+}
 
+/*Begins Dining, do while loop to run the eat think cycle*/
+void dining(char** argv){
+    struct chpInfo ch; 
+    //set group id 
     initGpid();
-    for(i = 0; i < seats; i++){	
-            if(sem_init(chopsticks[i], 1, 1) != 0){
-                    fprintf(stderr,"Error: Failed to initialize semaphore\n");
-            }
-    }
-    */
+    srand(time(NULL));
+    //initialize all the semaphores from 0 to argv[1]
+    initSem(argv, &ch);
+    do{
+        //sem_wait on HnWChopstick to setup a critical section
+        sem_wait(ch.HnWChopstick);
+            if(sem_wait(ch.chopstick[ch.pos % ch.total]) != -1 &&
+               sem_wait(ch.chopstick[(ch.pos+1) % ch.total]) != -1 ){
+                    eat(&ch);
+                    sem_post(ch.HnWChopstick);
+                }
+        
+            if(sem_post(ch.chopstick[ch.pos % ch.total]) != -1 &&
+               sem_post(ch.chopstick[(ch.pos+1) % ch.total]) != -1 && !Finished){
+                think(&ch);
+                fullCycles++;
+                }
+    }while(!Finished);
+          //close and unlink semaphores
+          finishAndClose(&ch);
+          fprintf(stderr, "Philosopher #%d completed %d cycles\n", ch.pos, fullCycles);
 }
 
-/*Philosopher "eats" for random time*/
+/*Philosopher "eats" for random time
+  if the flag has been set skip this
+*/
 void eat(struct chpInfo *ch){
-    randTime();
+    if(!Finished){
     fprintf(stdout, "Philosopher #%d is eating\n", ch->pos);
-}
-
-/*Philosopher "thinks" for random time*/
-void think(struct chpInfo *ch){
     randTime();
-    fprintf(stdout, "Philosopher #%d is thinking\n", ch->pos);
+    }
 }
 
+/*Philosopher "thinks" for random time
+  if the flag has been set skip this
+*/
+void think(struct chpInfo *ch){
+    if(!Finished){
+    fprintf(stdout, "Philosopher #%d is thinking\n", ch->pos);
+    randTime();
+    }
+}
+
+/*Initializes array of semaphores based on size of first argument passed in 
+ Also sets up a second semaphore for implementing a critical section*/
 void initSem(char **argv, struct chpInfo *ch){
-    int i = 0;
     char chops[40];
-        ch->seat = atoi(argv[1]);
+        ch->total = atoi(argv[1]);
         ch->pos = atoi(argv[2]);
-        ch->chopstick = malloc(sizeof(sem_t*) *ch->seat);
-        for (i = 1; i < ch->seat; i++) {
-            //fill array/buffer before copying chopstick number into it
-            memset(chops,0,40);
-            sprintf(chops, "Chopstick%d", i);
-            ch->chopstick[i] = sem_open(chops, O_CREAT, 0666, 1);
-        }
+        ch->chopstick = malloc(sizeof(sem_t*) *ch->total+1);
+        setupString(chops, ch);
         //added for part 2 to create a critical section
         ch->HnWChopstick = sem_open("allocate", O_CREAT, 0666, 1);
 }
 
+/*setup the string name and open a chopstick equal to the amount of seats 
+  passed in*/
+void setupString(char *chp, struct chpInfo *ch){
+    int i;
+    for (i = 0; i < ch->total; i++) {
+    sprintf(chp, "Chopstick%d", i);
+    ch->chopstick[i] = sem_open(chp, O_CREAT, 0666, 1);//maybe 0644
+    }
+}
+
+/*Check for an existing file, if a file currently exists copy and set the gpid 
+ * that is in the file, if no file exists set a gpid and store it in the file*/
 void initGpid(){
    FILE *pnt ; 
    struct stat buffer;
     
-    /* Check if file PGROUP.txt currently exists */
-    if (stat(pGroupFile, &buffer) == 0){
+    // Check if file PGROUP.txt currently exists
+    if (stat(File, &buffer) == 0){
         //buffer for getline
         char *b = NULL;
         size_t size = 0;
         //PGROUP.txt already exists open it to be read with "r"
-        pnt = fopen(pGroupFile, "r");
+        pnt = fopen(File, "r");
         getline(&b, &size, pnt);
         setpgid(getpid(), strtol(b, NULL, 10));
         fclose(pnt);
@@ -166,47 +190,60 @@ void initGpid(){
         char pid[20];
         memset(pid, 0, 20);
         //PGROUP.txt doesnt exist create it and open to write with "w"
-        pnt = fopen(pGroupFile, "w");
+        pnt = fopen(File, "w");
         sprintf(pid, "%d", gpid);
         fwrite(pid, sizeof(char), sizeof(pid), pnt);
         fclose(pnt);
     }
 }
 
-void sigHandler(int sig){
-    Finished = 1;
+//remove philosopher from eat/think cycle and dealocate system resources
+void finishAndClose(struct chpInfo *ch){
+    int i;
+	for (i = 0; i < ch->total; i++) {
+            //sem_close first to lower the count to 0 for unlink
+            if(sem_close(ch->chopstick[i]) == -1)
+                fprintf(stderr, "%d Error: Chopstick%d failed to close \n", getpid(), i);
+        }
+        if(sem_close(ch->HnWChopstick) == -1)
+                fprintf(stderr, "%d Error: HnWChopstick failed to close \n", getpid());
+        //Check for if semaphores have already been unlinked
+        checkFirst(ch);
+        //free the memory set with maloc on chopstick
+        free(ch->chopstick);
 }
 
-//remove philospher from eat/think cycle and deallocate system resources
-void finishEating(int pos, sem_t chop[], char* sem){
-	sem_close(&chop[pos]);
-	/*shm_unlink(sem);*/
-	sem_destroy(&chop[pos]);
+/*Check for existence of a file, if it doesnt exist then create it and unlink,
+ if it doesnt exist do nothing as the semaphores hace already been unlinked*/
+void checkFirst(struct chpInfo *ch){
+    FILE *pnt ; 
+    struct stat buffer;
+    if (stat(File2, &buffer) != 0){
+        printf("%d\n",getpid());
+        pnt = fopen(File2, "w");
+        fclose(pnt);
+        chpUnlink(ch);
+    }
 }
 
-/*Waits for a random amount of time, no greater than 1,000,000*/
+/*unlinks all the semaphores in the chopstick array as well as the semaphore 
+ used for the critical section*/
+void chpUnlink(struct chpInfo *ch){
+    int i;
+    char chops[40];
+    for (i = 0; i < ch->total; i++) {
+    sprintf(chops, "Chopstick%d", i);
+    if(sem_unlink(chops) == -1 && errno !=2) 
+       fprintf(stderr, "%d Error: Chopstick%d failed to unlink\n",getpid(), i);        
+    }
+    if(sem_unlink("allocate") == -1 && errno != 2) 
+                fprintf(stderr, "%d Error: allocate failed to unlink\n", getpid());     
+}
+
+/*Waits for a random amount of time, no greater than 1,000,000
+ set to be at least 99,999 to limit the speed in which the semaphores cycle*/
 void randTime(){
-    useconds_t usec = rand() % 1000000;
-    if(usleep(usec) == -1){
-        fprintf(stderr, "usleep function failed to run\n");
-        exit(EXIT_FAILURE);
-    }
+    int usec = (rand() % 900000) + 99999;
+    usleep(usec);
 }
 
-int holdAndWait(struct chpInfo *ch, int j) {
-    if (j == 1) {
-        int x;
-        if((sem_trywait(ch->HnWChopstick) != -1))
-            x = 1;
-        else
-            x = 0;
-        return x;
-    
-    }
-    else if (j == 0) {
-
-        sem_post(ch->HnWChopstick);
-        return 1;
-    }
-    return 1;
-}
