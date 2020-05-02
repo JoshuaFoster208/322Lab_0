@@ -1,0 +1,20 @@
+# Name: Joshua Foster
+# Project: Lab5: Page/Offset calculation
+
+EXECUTABLES=a.out
+SRC=Src/a_out.c
+OBJ=a_out.o
+
+CC=gcc
+CFLAGS = -g -Wall -Wextra
+
+# Here is my default target for the Makefile.  When I type make, this first target will
+# be created. I.e., all the executables
+all: $(EXECUTABLES)
+
+$(EXECUTABLES): $(SRC)
+	$(CC) $(CFLAGS) -c $(SRC) 
+	$(CC) $(CFLAGS) -o $@ $(OBJ) -lpthread -lrt
+
+clean:
+	rm -f $(EXECUTABLES) $(OBJ) *~
