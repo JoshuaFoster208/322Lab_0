@@ -14,7 +14,7 @@ all: $(EXECUTABLES)
 
 $(EXECUTABLES): $(SRC)
 	$(CC) $(CFLAGS) -c $(SRC) 
-	$(CC) $(CFLAGS) -o $@ $(OBJ) -lpthread -lrt
+	$(CC) $(CFLAGS) -o $@ $(OBJ)
 
 clean:
 	rm -f $(EXECUTABLES) $(OBJ) *~
