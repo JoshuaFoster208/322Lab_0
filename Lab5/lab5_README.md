@@ -3,7 +3,7 @@ Current status of the project
 Created not ready for testing
 ## Output
 ### a.out
-![output](https://media.discordapp.net/attachments/636118401080885259/691783663154888724/OutputLab3.PNG)
+![output](https://cdn.discordapp.com/attachments/636118363298463747/706310491194130493/a_out.PNG)
 ## Log
 1. May 2nd
    - Create Lab5
