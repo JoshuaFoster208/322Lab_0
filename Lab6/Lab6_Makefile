@@ -2,9 +2,16 @@
 # Project: Lab6 Wack a Mole!
 
 
-EXECUTABLES=spiritd
-SRC=src/spiritd.c
-OBJ=spiritd.o
+EXECUTABLES=spiritd mole
+SPIRITD=spiritd
+MOLE=mole
+SRC=src/spiritd.c src/mole.c
+OBJ=spiritd.o mole.o
+SRC1=src/spiritd.c
+OBJ1=spiritd.o
+SRC2=src/mole.c
+OBJ2=mole.o
+
 
 CC=gcc
 CFLAGS = -g -Wall -Wextra
@@ -13,9 +20,21 @@ CFLAGS = -g -Wall -Wextra
 # be created. I.e., all the executables
 all: $(EXECUTABLES)
 
+spiritd: $(SPIRITD)
+
+mole: $(MOLE)
+
 $(EXECUTABLES): $(SRC)
 	$(CC) $(CFLAGS) -c $(SRC) 
 	$(CC) $(CFLAGS) -o $@ $(OBJ)
+
+$(SPIRITD): $(SRC1)
+	$(CC) $(CFLAGS) -c $(SRC1) 
+	$(CC) $(CFLAGS) -o $@ $(OBJ1)
+
+$(MOLE): $(SRC2)
+	$(CC) $(CFLAGS) -c $(SRC2) 
+	$(CC) $(CFLAGS) -o $@ $(OBJ2)
 
 clean:
 	rm -f $(EXECUTABLES) $(OBJ) *~
