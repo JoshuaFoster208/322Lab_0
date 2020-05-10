@@ -10,39 +10,30 @@ void createMatrix(int size);
 int main(int argc, char ** argv) {
     argc = argc;
     int size; 
-    char *buf;
-    size = strtol(argv[1], &buf, 10);
+    size = strtol(argv[1], NULL, 10);//grab the int from parameter one
     createMatrix(size);
-    return 0;
+    return (EXIT_SUCCESS);
 }
-
-
-/**
- * @brief generate_matrix - Prints matrix contents to stdout 
- *
- * @param size - Size for SizeXSize matrix
- */
+/*creates the matrix with the random numbers of size size by size
+ spaces out the columns to be 4 bytes/chars to be able to hold -100 might make 
+ * it 5 to add more space now that ive seen how it looks*/
 void createMatrix(int size) {
 
     int randomVar;
-
+/*Random seed*/
     srand(time(NULL));
     
-    /* Generate matrix one column at a time. Each column is 4 bytes,
-     * being the maximum amount of characters a number -100 to 100 can
-     * occupy. The matrix_add program will need to parse numbers 4 on 
-     * intervals of 4 bytes each */
+    
     for (int i = 0; i < size; i++) {//row
         for (int j = 0; j < size; j++) {//col
             //rand mod 101 randomly generates a number from 0 to 100
             randomVar = rand() % 101;
-            if(rand() % 2)//if odd rand number
+            if(rand() % 2)//if odd negative number
                randomVar = randomVar * -1; 
             
             fprintf(stdout, "%4d", randomVar);
         }
-        fprintf(stdout, "\n");
-    }
+        fprintf(stdout, "\n");//skip line to space
     
 }
 
