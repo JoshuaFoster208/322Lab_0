@@ -17,6 +17,7 @@
  the others besides maybe lab4*/
 
 /* for reference
+ * http://man7.org/linux/man-pages/man7/aio.7.html
  * struct aiocb {
      The order of these fields is implementation-dependent 
 
@@ -43,7 +44,7 @@ void run(int argc, char **argv){
     argc = argc;
     int startTime, scalar, size, blocks, blockSize, offset; 
     char *buf;
-    struct aiocb first;
+    struct aiocb last, current, next;
     
     /*Setup necessary variables*/
     startTime = time(NULL);
@@ -55,32 +56,117 @@ void run(int argc, char **argv){
     blockSize = size / blocks;
     
     //zero out before the aioreadrequest so that nothing can interupt it
-    memset(&first, 0, sizeof(struct aiocb));
+    memset(&current, 0, sizeof(struct aiocb));
     //4 bytes per col based on max size of value
     offset = (blockSize*4)*2;
     //set the fd to in for read
-    first.aio_fildes = IN;
+    current.aio_fildes = IN;
     //set the bytes per block size
-    first.aio_nbytes = blockSize;
+    current.aio_nbytes = blockSize;
     //set the offset
-    first.aio_offset = offset;
+    current.aio_offset = offset;
     /*missed these at first 
      * need to allocate space for read operations
      * have to set a priority even if said priority wont matter in this example
      * */
-    first.aio_buf = malloc(blockSize);
-    first.aio_reqprio = 0;
+    current.aio_buf = malloc(blockSize);
+    current.aio_reqprio = 0;
     //call aoi_read after the setup
-    aio_read(&first);    
+    aio_read(&current);    
     //wait for read to finish
     //cant use suspendaio_suspend(&first, ,NULL);
-    while (aio_error(&first) == EINPROGRESS){
+    while(aio_error(&current) == EINPROGRESS){
     };
 
     //retrieve the aiocb information now that the i/o op is complete
-    aio_return(&first);
+    aio_return(&current);
+       
+     for (int i = offset; i < (size*4)*2; i += offset) {
+    /*repeat steps above reminder come back and make it a function if this works*/
     
-    matrix_add(size, blocks, scalar, &first);
+    //zero out before the aioreadrequest so that nothing can interupt it
+    memset(&next, 0, sizeof(struct aiocb));
+    //4 bytes per col based on max size of value
+    offset = (blockSize*4)*2;
+    //set the fd to in for read
+    next.aio_fildes = IN;
+    //set the bytes per block size
+    next.aio_nbytes = blockSize;
+    //set the offset
+    next.aio_offset = offset;
+    /*missed these at first 
+     * need to allocate space for read operations
+     * have to set a priority even if said priority wont matter in this example
+     * */
+    next.aio_buf = malloc(blockSize);
+    next.aio_reqprio = 0;        
+        /* Execute read on the next block */
+        aio_read(&next);
+        
+        /* See busy wait justification above in first call to aio_error() */
+        while(aio_error(&next) == EINPROGRESS){
+        };
+
+        /* Add scalar to last read block */
+    matrix_add(size, blocks, scalar, &current);
+
+        /*move the scalared values from current to last so that last can 
+         * write the info*/
+        memcpy(&last, &current, sizeof(struct aiocb));
+
+        // sets up last for a write call this time 
+    //zero out before the aioreadrequest so that nothing can interupt it
+    memset(&last, 0, sizeof(struct aiocb));
+    //4 bytes per col based on max size of value
+    offset = (blockSize*4)*2;
+    //set the fd to in for read
+    last.aio_fildes = OUT;
+    //set the bytes per block size
+    last.aio_nbytes = blockSize;
+    //set the offset
+    last.aio_offset = offset;
+    /*missed these at first 
+     * have to set a priority even if said priority wont matter in this example
+     * */
+    last.aio_reqprio = 0;   
+        aio_write(&last);
+        
+        //wait again but for the write call
+        while (aio_error(&last) == EINPROGRESS){
+        };
+        aio_return(&last);
+        /* Sync the write output to disk */
+        aio_fsync(O_SYNC, &last);
+
+        /* Overwrite the current block that has already been copied to 'last' and
+         * written to stdout, with the next block prepped for aio_reads */
+        memcpy(&current, &next, sizeof(struct aiocb));
+    }
+
+    /* Last drain the pump by handling the last block */
+    matrix_add(size, blocks, scalar, &current);
+
+    /* Write the last 'current' block to stdout */
+    //zero out before the aioreadrequest so that nothing can interupt it
+    memset(&last, 0, sizeof(struct aiocb));
+    //4 bytes per col based on max size of value
+    offset = (blockSize*4)*2;
+    //set the fd to in for read
+    last.aio_fildes = OUT;
+    //set the bytes per block size
+    last.aio_nbytes = blockSize;
+    //set the offset
+    last.aio_offset = offset;
+    /*missed these at first 
+     * have to set a priority even if said priority wont matter in this example
+     * */
+    last.aio_reqprio = 0;       aio_write(&current);
+    while (aio_error(&current) == EINPROGRESS){};
+    aio_return(&current);
+    //only a request have to check if it failed to sync
+    if(aio_fsync(O_SYNC, &current) == -1){
+        fprintf(stderr,"Error: current failed to sync (line 156)\n");
+    }
 
 }
 
@@ -110,6 +196,8 @@ void matrix_add(int size, int blocks, int scalar, struct aiocb *data){
 
         // replace the value in the buffer
         memmove((void *)data->aio_buf+i, buf2, 4);
+        
+        
         
     }
 }
