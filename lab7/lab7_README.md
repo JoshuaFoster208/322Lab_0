@@ -12,3 +12,5 @@ Created not ready for testing
    - Removed errors and warnings
      - currently looking for makefile error with aio_read
    - Removed Makefile error with inclusion of -lrt library
+   - Setup Matrix_add for part2
+   - alter function calls in matrix_add, casted (void *)
