@@ -40,19 +40,22 @@ int main(int argc, char **argv) {
 }
 
 void run(int argc, char **argv){
+    argc = argc;
     int startTime, scalar, size, blocks, blockSize, offset; 
     char *buf;
     struct aiocb first;
     
     /*Setup necessary variables*/
     startTime = time(NULL);
+    printf("%d", startTime);
     size = strtol(argv[1], &buf, 10);
     blocks = strtol(argv[2], &buf, 10);    
     scalar = rand() % 101;
+    scalar = scalar;
     blockSize = size / blocks;
     
     //zero out before the aioreadrequest so that nothing can interupt it
-    memset(first, 0, sizeof(struct aiocb));
+    memset(&first, 0, sizeof(struct aiocb));
     //4 bytes per col based on max size of value
     offset = (blockSize*4)*2;
     //set the fd to in for read
@@ -61,6 +64,12 @@ void run(int argc, char **argv){
     first.aio_nbytes = blockSize;
     //set the offset
     first.aio_offset = offset;
+    /*missed these at first 
+     * need to allocate space for read operations
+     * have to set a priority even if said priority wont matter in this example
+     * */
+    first.aio_buf = malloc(blockSize);
+    first.aio_reqprio = 0;
     //call aoi_read after the setup
     aio_read(&first);    
     aio_return(&first);
@@ -70,9 +79,11 @@ void run(int argc, char **argv){
 }
 
 void matrix_add(int size, int block, int scalar){
-    for(int i = 1; i < size; i++){
-        for(int j = 1; j < size; j++){
-            block[i][j] += scalar;
+    for(int i = 0; i < size; i++){
+        for(int j = 0; j < size; j++){
+            //block[i][j] += scalar;
+            scalar = scalar;
+            block = block;
 
         }
     }
