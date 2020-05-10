@@ -90,8 +90,9 @@ void matrix_add(int size, int blocks, int scalar, struct aiocb *data){
     //holds the 4 bytes plus the '\0' 
     char* buf1[5], buf2[5];
     /* loop thorugh the buffer in data while i < number of bytes
-     * increment by 4 to account for the size*/
-    for (int i = 0; i < data->aio_nbytes; i = i + 4) {
+     * increment by 4 to account for the size
+     * switch to unsigned int i to cover comparison issues*/
+    for (unsigned int i = 0; i < data->aio_nbytes; i = i + 4) {
         /*from what I read online memset may be overkill: reset the string 
          * so that the following numbers copied dont overlap
          * such as in the case of the first number being -100 
@@ -101,13 +102,14 @@ void matrix_add(int size, int blocks, int scalar, struct aiocb *data){
 
         /* move 4 bytes from the buffer
          * add i to the address it as it loops to get the next number*/
-        memmove(buf1, data->aio_buf+i, 4);
+        memmove(buf1, (void *)data->aio_buf+i, 4);
         
-        holdNum = atoi(buf1) + scalar;
+        holdNum = atoi((void*)buf1) + scalar;
 
         sprintf(buf2, "%4d", holdNum);
 
         // replace the value in the buffer
-        memmove(data->aio_buf+i, buf2, 4);
+        memmove((void *)data->aio_buf+i, buf2, 4);
+        
     }
 }
