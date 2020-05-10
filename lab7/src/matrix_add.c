@@ -32,7 +32,7 @@
 };*/
 
 void run(int argc, char **argv);
-void matrix_add(int size, int block, int scalar);
+void matrix_add(int size, int blocks, int scalar, struct aiocb *data);
 int main(int argc, char **argv) {
     run(argc, argv);
 
@@ -72,19 +72,42 @@ void run(int argc, char **argv){
     first.aio_reqprio = 0;
     //call aoi_read after the setup
     aio_read(&first);    
+    //wait for read to finish
+    //cant use suspendaio_suspend(&first, ,NULL);
+    while (aio_error(&first) == EINPROGRESS){
+    };
+
+    //retrieve the aiocb information now that the i/o op is complete
     aio_return(&first);
     
-       // matrix_add(size, block, scalar);
+    matrix_add(size, blocks, scalar, &first);
 
 }
 
-void matrix_add(int size, int block, int scalar){
-    for(int i = 0; i < size; i++){
-        for(int j = 0; j < size; j++){
-            //block[i][j] += scalar;
-            scalar = scalar;
-            block = block;
+void matrix_add(int size, int blocks, int scalar, struct aiocb *data){
+    //unsigned for negative values
+    unsigned holdNum;
+    //holds the 4 bytes plus the '\0' 
+    char* buf1[5], buf2[5];
+    /* loop thorugh the buffer in data while i < number of bytes
+     * increment by 4 to account for the size*/
+    for (int i = 0; i < data->aio_nbytes; i = i + 4) {
+        /*from what I read online memset may be overkill: reset the string 
+         * so that the following numbers copied dont overlap
+         * such as in the case of the first number being -100 
+         * and the second being 1 you would get -101*/
+        memset(buf1, '\0', sizeof(buf1));
+        memset(buf2, '\0', sizeof(buf2));
 
-        }
+        /* move 4 bytes from the buffer
+         * add i to the address it as it loops to get the next number*/
+        memmove(buf1, data->aio_buf+i, 4);
+        
+        holdNum = atoi(buf1) + scalar;
+
+        sprintf(buf2, "%4d", holdNum);
+
+        // replace the value in the buffer
+        memmove(data->aio_buf+i, buf2, 4);
     }
 }
