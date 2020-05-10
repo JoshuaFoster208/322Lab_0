@@ -11,3 +11,4 @@ Created not ready for testing
      - setup the process for aio_read and aio_return
    - Removed errors and warnings
      - currently looking for makefile error with aio_read
+   - Removed Makefile error with inclusion of -lrt library
