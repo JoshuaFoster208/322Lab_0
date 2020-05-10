@@ -27,3 +27,4 @@ Created and tested
      - added and removed comments that were to remind me to do things and the reference paragraph at the top
      - several other small things
     - smoothed out comments and made the scalar range be from -100 to 100 so that there will be a mix of postiives and negatives in the file
+    - added back a closing bracket from matrix_gen
