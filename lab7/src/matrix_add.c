@@ -34,6 +34,8 @@
 
 void run(int argc, char **argv);
 void matrix_add(int size, int blocks, int scalar, struct aiocb *data);
+void setIn(int offset, int blockSize, struct aiocb *data);
+void setOut(int offset, int blockSize, struct aiocb *data);
 int main(int argc, char **argv) {
     run(argc, argv);
 
@@ -54,23 +56,18 @@ void run(int argc, char **argv){
     scalar = rand() % 101;
     scalar = scalar;
     blockSize = size / blocks;
+     if (size % blocks) {
+        fprintf(stderr, "Error: Invalid Entries(line 60)\n");
+        exit(EXIT_FAILURE); 
+    }
     
-    //zero out before the aioreadrequest so that nothing can interupt it
-    memset(&current, 0, sizeof(struct aiocb));
+    
     //4 bytes per col based on max size of value
     offset = (blockSize*4)*2;
-    //set the fd to in for read
-    current.aio_fildes = IN;
-    //set the bytes per block size
-    current.aio_nbytes = blockSize;
-    //set the offset
-    current.aio_offset = offset;
-    /*missed these at first 
-     * need to allocate space for read operations
-     * have to set a priority even if said priority wont matter in this example
-     * */
-    current.aio_buf = malloc(blockSize);
-    current.aio_reqprio = 0;
+
+    
+    setIn(offset, blockSize, &current);
+   
     //call aoi_read after the setup
     aio_read(&current);    
     //wait for read to finish
@@ -84,22 +81,8 @@ void run(int argc, char **argv){
      for (int i = offset; i < (size*4)*2; i += offset) {
     /*repeat steps above reminder come back and make it a function if this works*/
     
-    //zero out before the aioreadrequest so that nothing can interupt it
-    memset(&next, 0, sizeof(struct aiocb));
-    //4 bytes per col based on max size of value
-    offset = (blockSize*4)*2;
-    //set the fd to in for read
-    next.aio_fildes = IN;
-    //set the bytes per block size
-    next.aio_nbytes = blockSize;
-    //set the offset
-    next.aio_offset = offset;
-    /*missed these at first 
-     * need to allocate space for read operations
-     * have to set a priority even if said priority wont matter in this example
-     * */
-    next.aio_buf = malloc(blockSize);
-    next.aio_reqprio = 0;        
+    setIn(offset, blockSize, &next);
+  
         /* Execute read on the next block */
         aio_read(&next);
         
@@ -114,21 +97,9 @@ void run(int argc, char **argv){
          * write the info*/
         memcpy(&last, &current, sizeof(struct aiocb));
 
-        // sets up last for a write call this time 
-    //zero out before the aioreadrequest so that nothing can interupt it
-    memset(&last, 0, sizeof(struct aiocb));
-    //4 bytes per col based on max size of value
-    offset = (blockSize*4)*2;
-    //set the fd to in for read
-    last.aio_fildes = OUT;
-    //set the bytes per block size
-    last.aio_nbytes = blockSize;
-    //set the offset
-    last.aio_offset = offset;
-    /*missed these at first 
-     * have to set a priority even if said priority wont matter in this example
-     * */
-    last.aio_reqprio = 0;   
+        // sets up last for a write call this time  
+        setOut(offset, blockSize, &last);
+        
         aio_write(&last);
         
         //wait again but for the write call
@@ -147,20 +118,8 @@ void run(int argc, char **argv){
     matrix_add(size, blocks, scalar, &current);
 
     /* Write the last 'current' block to stdout */
-    //zero out before the aioreadrequest so that nothing can interupt it
-    memset(&last, 0, sizeof(struct aiocb));
-    //4 bytes per col based on max size of value
-    offset = (blockSize*4)*2;
-    //set the fd to in for read
-    last.aio_fildes = OUT;
-    //set the bytes per block size
-    last.aio_nbytes = blockSize;
-    //set the offset
-    last.aio_offset = offset;
-    /*missed these at first 
-     * have to set a priority even if said priority wont matter in this example
-     * */
-    last.aio_reqprio = 0;       aio_write(&current);
+    setOut(offset, blockSize, &last);
+    aio_write(&current);
     while (aio_error(&current) == EINPROGRESS){};
     aio_return(&current);
     //only a request have to check if it failed to sync
@@ -200,4 +159,35 @@ void matrix_add(int size, int blocks, int scalar, struct aiocb *data){
         
         
     }
+}
+
+void setIn(int offset, int blockSize, struct aiocb *data){
+  //zero out before the aioreadrequest so that nothing can interupt it
+    memset(&data, 0, sizeof(struct aiocb));
+    //set the fd to in for read
+    data->aio_fildes = IN;
+    //set the bytes per block size
+    data->aio_nbytes = blockSize;
+    //set the offset
+    data->aio_offset = offset;
+    /*missed these at first 
+     * need to allocate space for read operations
+     * have to set a priority even if said priority wont matter in this example
+     * */
+    data->aio_buf = malloc(blockSize);
+    data->aio_reqprio = 0;   
+}
+
+void setOut(int offset, int blockSize, struct aiocb *data){
+/*a classmate told me that i shouldnt be zeroing out stdout, 
+ * I'm gonna look into why but for now it works*/
+    //set the fd to in for read
+    data->aio_fildes = OUT;
+    //set the bytes per block size
+    data->aio_nbytes = blockSize;
+    //set the offset
+    data->aio_offset = offset;
+    /*missed this at first 
+     * have to set a priority even if said priority wont matter in this example*/
+    data->aio_reqprio = 0;   
 }
