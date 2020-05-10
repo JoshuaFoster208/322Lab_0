@@ -1,6 +1,6 @@
 # 322Lab7
 Current status of the project
-Created not ready for testing
+Created and tested
 ## Output
 ### matrix_gen
 ![output](https://media.discordapp.net/attachments/636118401080885259/708954928583933973/gen.PNG)
