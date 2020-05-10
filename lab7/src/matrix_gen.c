@@ -34,6 +34,6 @@ void createMatrix(int size) {
             fprintf(stdout, "%4d", randomVar);
         }
         fprintf(stdout, "\n");//skip line to space
-    
+    }
 }
 
