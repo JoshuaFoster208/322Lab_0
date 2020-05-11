@@ -1,11 +1,11 @@
 # 322Lab7
 Current status of the project
-Created and tested
+Created and tested occasional segfault error
 ## Output
 ### matrix_gen
 ![output](https://media.discordapp.net/attachments/636118401080885259/708954928583933973/gen.PNG)
 ### matrix_add
-![output](https://cdn.discordapp.com/attachments/636118401080885259/708954926562410528/add.PNG)
+![output](https://media.discordapp.net/attachments/636118401080885259/709522703589179552/somewhat_works.PNG?width=1223&height=359)
 ## Log
 1. May 9th
    - Create Lab7
@@ -21,9 +21,18 @@ Created and tested
    - fixed segmentation faults
    - altered to work better with the call format
 2. May 10th
-   - Change many small things program works correctly
+   - Change many small things program works relatively correctly
      - Changed print to format the lines
      - printed the start and end time to the file
      - added and removed comments that were to remind me to do things and the reference paragraph at the top
      - several other small things
     - smoothed out comments and made the scalar range be from -100 to 100 so that there will be a mix of postiives and negatives in the file
+    - added back a closing bracket from matrix_gen
+3. May 11th
+   - Made many more changes to attempt to fix an error and to format better
+     - Added 4th struct specifically for output/line spaces
+     - Formatted and heavily commented what I coded with my thought process to hopefully get partial credit
+     - added functions
+     - updated readMe
+     - many other small changes/improvements I noticed after finally having some sleep
+     - to all those who clone my repository you don't want mine trust me it doesnt work exactly correctly lol
