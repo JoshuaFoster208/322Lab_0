@@ -122,14 +122,14 @@ offset = blockSize*blockSize;
 //both are incremented by the offset which is the updated blockSize
     
 //i now realize that this would make the first write be one block into the file
-displacement2 = offset;
+//displacement2 = offset;
 for (displacement = offset; displacement < ((size*size)*4); 
              displacement = displacement + offset) {
        
  //setup next to read the next block in the file
     setIn(offset, displacement, &next);
   
- //begin reading the next block into the buffer setup
+ //begin reading the next block into the buffer setup_fi
     aio_read(&next);
  //bool holds whether or not to add a byte for the line skip
  //output will be used to hold the updated buffer for writing
@@ -295,10 +295,6 @@ void setIn(off_t offset, int displacement, struct aiocb *data){
 
 //Use malloc to allocate space for the buffer the size of the offset
     data->aio_buf = malloc(offset);
-    
- //Not sure if necessary but examples I've seen have had them, kept all equivalent 
- // to ensure none finished ahead of previously called ones
-    data->aio_reqprio = 0;   
 
 }
 
@@ -316,11 +312,6 @@ void setOut(off_t offset,int displacement, struct aiocb *data){
 //would be unnecessary if the fd had O_APPEND but the original was not >>
     data->aio_offset = displacement;
     
-//Not sure if necessary but examples I've seen have had them, kept all equivalent 
-// to ensure none finished ahead of previously called ones
-//If I had fixed the error I would have needed this as I would have changed the 
-//while loops to allow for this 
-    data->aio_reqprio = 0;   
 }
 
 
