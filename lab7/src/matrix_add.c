@@ -237,21 +237,22 @@ void matrix_add(int size, int scalar, struct aiocb *data, struct aiocb *output){
 //called memmove to be safe but have come to the conclusion that since we are not
 //accessing the same memory at any point it may be unneccesary but better to be safe
 //add bytes to the buffer to stand the current position in the buffer
-        memcpy(numBuf, (void *)data->aio_buf+bytes, 4);
-        
+        memmove(numBuf, (void *)data->aio_buf+bytes, 4);
+        fprintf(stderr, "Before %s", numBuf);
 //Convert the string to an int add the scalar and store in holdNum
 //atoi couldn't match types passed in, so used strtol
         holdNum = strtol(numBuf, NULL, 10) + scalar;
-        fprintf(stderr, "%d ", holdNum);
+        //fprintf(stderr, "%d ", holdNum);
 //reset the numBuffer again to prepare to copy the string back into it
         memset(numBuf, '\0', sizeof(numBuf));
         
 //convert the number back into numBuf
 //formatted size to %4d to keep formatting consistent between files
         sprintf(numBuf, "%4d", holdNum);
+        fprintf(stderr, "After %s \n", numBuf);
         
 //move the updated number from the buffer into the output struct
-        memcpy((void *)output->aio_buf + (bytes + extra), numBuf, 4);
+        memmove((void *)output->aio_buf + (bytes + extra), numBuf, 4);
         
 //extra should be never be more than 1 but added as a precaution
 //if the total number of loops / numbers written to the file is a mulitiple of 
@@ -260,8 +261,8 @@ void matrix_add(int size, int scalar, struct aiocb *data, struct aiocb *output){
 //would have reached that point during this matrix_add call
         if(count%size == 0){
             extra++;
-            memcpy((void *)output->aio_buf + (bytes + extra + 4), lnSkipBuf, 1);
-            fprintf(stderr, "\n");
+            memmove((void *)output->aio_buf + (bytes + extra + 4), lnSkipBuf, 1);
+      //      fprintf(stderr, "\n");
 
         }
     }
