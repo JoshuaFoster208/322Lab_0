@@ -50,8 +50,7 @@ void run(int argc, char **argv){
     struct aiocb last, current, next, output;
     
 //Sets up the starting time and sets a random seed
-    startTime = time(NULL);
-    srand(time(NULL));
+    srand((startTime = time(NULL)));
     
 //retrieve the two parameters size and blocks from argv
     size = strtol(argv[1], &buf, 10);
@@ -79,8 +78,7 @@ void run(int argc, char **argv){
     displacement2 = 0;
 //blockSize is the size of the blocks before the change to one for loop
 //It is multiplied by 4 as the input files' columns are spaced by 4 for each number
-    blockSize = size / blocks;
-    blockSize = blockSize * 4;
+    blockSize = (size / blocks)*4;
     
 //verify if parameters divide evenly, exits upon failure  
      if (size % blocks) {
@@ -92,7 +90,7 @@ void run(int argc, char **argv){
 offset = blockSize*blockSize;
 
 /*
- Prime the pump as reccomended
+ Prime the pump as recommended
  * setup current and read the first block
  */
 
@@ -105,8 +103,7 @@ offset = blockSize*blockSize;
 
 //originally attempted aio_suspend(&first, ,NULL); but ran into difficulties 
 //Now loops until aio_error returns 0 or a postive val error message as required
-    while(aio_error(&current) == EINPROGRESS){
-    }
+    while(aio_error(&current) == EINPROGRESS){}
     
 //retrieves the number of bytes successfully read 
     aio_return(&current);
@@ -144,8 +141,7 @@ for (displacement = offset; displacement < ((size*size)*4);
     memcpy(&last, &output, sizeof(struct aiocb));
   
 //if the I/O hasn't finished by the time addition is done then wait for it to finish
-    while(aio_error(&next) == EINPROGRESS){
-    }
+    while(aio_error(&next) == EINPROGRESS){}
 
 // setOut will set up last for an aio_write call but will not replace the buffer
     setOut(offset, displacement2, &last);
@@ -157,7 +153,7 @@ for (displacement = offset; displacement < ((size*size)*4);
 //resets the int boolean called before while to save time
 if(bool){
         displacement2 = displacement2 + (offset+1);
-        bool = 0;
+        bool = 1;
     }else{
         displacement2 = displacement2 + offset;
         bool = 0;
@@ -169,18 +165,15 @@ if(bool){
 //returned after EINPROGRESS. ENOSYS claims that the function is not implemented
 //and I could find any resources to help fix the bug, majority of my final time
 //was spent on this        
-    while (aio_error(&last) == EINPROGRESS){
-    }
-    
+    while (aio_error(&last) == EINPROGRESS){}
     aio_return(&last);
  
 //fsync isnt 100% necessary from what i have read online, however it does cover 
 //in the case of a crash
 //it is important to remember that it is only a request so you have to check if 
 //it failed to sync
-    if(aio_fsync(O_SYNC, &last) == -1){
-        fprintf(stderr,"Error: last failed to sync (line 182)\n");
-    }
+    if(aio_fsync(O_SYNC, &last) == -1)
+        fprintf(stderr,"Error: last failed to sync (line 182)\n");    
 
 //copy the next block that has finished reading to the current struct for when 
 //it loops through again
@@ -212,9 +205,8 @@ if(bool){
     aio_return(&output);
  
 //sync the final block, still only a request so check for failure to sync
-    if(aio_fsync(O_SYNC, &output) == -1){
+    if(aio_fsync(O_SYNC, &output) == -1)
         fprintf(stderr,"Error: current failed to sync (line 216)\n");
-    }
     
 //outputs the startTime, calculates the end time and outputs that as well
     outputTime(startTime);
@@ -324,7 +316,7 @@ void outputTime(int sTime){
 /*seOutput checks if the next block to write will need a new line and calls 
  *setIn to match the size needed*/
 int setOutput(int blockSize, int offset, int size, struct aiocb *output){
-    int i=0;
+    int i = 0;
 //lockSize equivalent to the amount of numbers being added to the file per block
     blockSize = blockSize/4;
 //If the remainder from the count%blocksize + blockSize is greater than or equal
