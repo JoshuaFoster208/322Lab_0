@@ -66,7 +66,7 @@ void run(int argc, char **argv){
 //Limited it to keep the range relatively small, so that i can see if negatives 
 //were behaving correctly, and so that the columns stayed aligned
     scalar = rand() % 101;
-    if(time(NULL) % 2)
+    if(startTime % 2)
         scalar = scalar * -1;// if rand is odd make negative scalar
 
 //Displacement will be used to represent the aoicb_offset 
@@ -118,8 +118,6 @@ offset = blockSize*blockSize;
 //displacement2 holds how far we should be displaced in the file being written too
 //both are incremented by the offset which is the updated blockSize
     
-//i now realize that this would make the first write be one block into the file
-//displacement2 = offset;
 for (displacement = offset; displacement < ((size*size)*4); 
              displacement = displacement + offset) {
        
@@ -239,12 +237,12 @@ void matrix_add(int size, int scalar, struct aiocb *data, struct aiocb *output){
 //called memmove to be safe but have come to the conclusion that since we are not
 //accessing the same memory at any point it may be unneccesary but better to be safe
 //add bytes to the buffer to stand the current position in the buffer
-        memmove(numBuf, (void *)data->aio_buf+bytes, 4);
+        memcpy(numBuf, (void *)data->aio_buf+bytes, 4);
         
 //Convert the string to an int add the scalar and store in holdNum
 //atoi couldn't match types passed in, so used strtol
         holdNum = strtol(numBuf, NULL, 10) + scalar;
-
+        fprintf(stderr, "%d ", holdNum);
 //reset the numBuffer again to prepare to copy the string back into it
         memset(numBuf, '\0', sizeof(numBuf));
         
@@ -253,7 +251,7 @@ void matrix_add(int size, int scalar, struct aiocb *data, struct aiocb *output){
         sprintf(numBuf, "%4d", holdNum);
         
 //move the updated number from the buffer into the output struct
-        memmove((void *)output->aio_buf + (bytes+extra), numBuf, 4);
+        memcpy((void *)output->aio_buf + (bytes + extra), numBuf, 4);
         
 //extra should be never be more than 1 but added as a precaution
 //if the total number of loops / numbers written to the file is a mulitiple of 
@@ -262,7 +260,9 @@ void matrix_add(int size, int scalar, struct aiocb *data, struct aiocb *output){
 //would have reached that point during this matrix_add call
         if(count%size == 0){
             extra++;
-        memmove((void *)output->aio_buf + (bytes + extra), lnSkipBuf, 1);
+            memcpy((void *)output->aio_buf + (bytes + extra + 4), lnSkipBuf, 1);
+            fprintf(stderr, "\n");
+
         }
     }
 }
